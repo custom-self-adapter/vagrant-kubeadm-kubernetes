@@ -41,6 +41,9 @@ Vagrant.configure("2") do |config|
           vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
         end
     end
+    if settings['custom_ca']
+      controlplane.vm.provision "shell", path: "scripts/gen-root-ca.sh"
+    end
     controlplane.vm.provision "shell",
       env: {
         "DNS_SERVERS" => settings["network"]["dns_servers"].join(" "),
@@ -58,6 +61,10 @@ Vagrant.configure("2") do |config|
         "SERVICE_CIDR" => settings["network"]["service_cidr"]
       },
       path: "scripts/master.sh"
+  end
+
+  if settings['custom_ca']
+    config.vm.provision "shell", path: "scripts/install_ca.sh"
   end
 
   (1..NUM_WORKER_NODES).each do |i|
