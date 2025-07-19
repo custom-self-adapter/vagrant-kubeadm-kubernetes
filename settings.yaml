@@ -8,7 +8,7 @@ cluster_name: Kubernetes Cluster
 #   HTTPS_PROXY=http://my-proxy:8000
 #   NO_PROXY=127.0.0.1,localhost,master-node,node01,node02,node03
 # All IPs/CIDRs should be private and allowed in /etc/vbox/networks.conf.
-custom_ca: false
+custom_ca: true
 network:
   # Worker IPs are simply incremented from the control IP.
   control_ip: 10.0.0.10
