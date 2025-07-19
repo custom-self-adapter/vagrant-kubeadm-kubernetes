@@ -9,6 +9,11 @@ set -euo pipefail
 
 CA_DIR="/vagrant/certs"
 
+if [ -d $CA_DIR -a -f $CA_DIR/rootCA.key ]
+then
+    exit 0
+fi
+
 mkdir -p $CA_DIR && cd $CA_DIR
 openssl genrsa -out rootCA.key 4096
 openssl req  -x509 -days 3650 -key rootCA.key \
