@@ -9,6 +9,7 @@ IP_NW = IP_SECTIONS.captures[0]
 # Last octet excluding all dots:
 IP_START = Integer(IP_SECTIONS.captures[1])
 NUM_WORKER_NODES = settings["nodes"]["workers"]["count"]
+CUSTOM_CA = settings['custom_ca']
 
 Vagrant.configure("2") do |config|
   config.vm.provision "shell", env: { "IP_NW" => IP_NW, "IP_START" => IP_START, "NUM_WORKER_NODES" => NUM_WORKER_NODES }, inline: <<-SHELL
@@ -27,6 +28,9 @@ Vagrant.configure("2") do |config|
   config.vm.box_check_update = true
 
   config.vm.define "controlplane" do |controlplane|
+    controlplane.vm.provision "shell", env: {"CUSTOM_CA": CUSTOM_CA}, inline: <<-SHELL
+      echo "custom_ca" $CUSTOM_CA
+    SHELL
     controlplane.vm.hostname = "controlplane"
     controlplane.vm.network "private_network", ip: settings["network"]["control_ip"]
     if settings["shared_folders"]
@@ -41,8 +45,9 @@ Vagrant.configure("2") do |config|
           vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
         end
     end
-    if settings['custom_ca']
+    if CUSTOM_CA
       controlplane.vm.provision "shell", path: "scripts/gen-root-ca.sh"
+      controlplane.vm.provision "shell", path: "scripts/install_ca.sh"
     end
     controlplane.vm.provision "shell",
       env: {
@@ -63,10 +68,6 @@ Vagrant.configure("2") do |config|
       path: "scripts/master.sh"
   end
 
-  if settings['custom_ca']
-    config.vm.provision "shell", path: "scripts/install_ca.sh"
-  end
-
   (1..NUM_WORKER_NODES).each do |i|
 
     config.vm.define "node0#{i}" do |node|
@@ -83,6 +84,9 @@ Vagrant.configure("2") do |config|
           if settings["cluster_name"] and settings["cluster_name"] != ""
             vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
           end
+      end
+      if CUSTOM_CA
+        node.vm.provision "shell", path: "scripts/install_ca.sh"
       end
       node.vm.provision "shell",
         env: {

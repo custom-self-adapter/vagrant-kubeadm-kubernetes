@@ -9,12 +9,14 @@ set -euo pipefail
 
 CA_DIR="/vagrant/certs"
 
-if [ -d $CA_DIR -a -f $CA_DIR/rootCA.key ]
+if [ -f $CA_DIR/rootCA.key ]
 then
+    echo "Root CA already exists, skipping"
     exit 0
 fi
 
 mkdir -p $CA_DIR && cd $CA_DIR
 openssl genrsa -out rootCA.key 4096
 openssl req  -x509 -days 3650 -key rootCA.key \
-  -subj "/CN=k8s.lab Root CA" -sha256 -out rootCA.crt
+  -addext "keyUsage=critical,digitalSignature,keyCertSign" \
+  -subj "/CN=k8s.lab Root CA" -sha256 -out rootCA.crt 
